@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ControlFut</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar" role="banner" aria-label="Barra de menú ControlFut">
+    <div class="brand">ControlFut</div>
+    <div class="powered" aria-hidden="false">Powered by <span class="itcpo">ITCPO</span></div>
+  </header>
+
+  <main class="app" role="main">
+    <aside class="sidebar" aria-label="Navegación principal">
+      <div class="userbox" id="userbox">
+        <!-- user info inserted here -->
+      </div>
+      <nav class="nav">
+        <button data-view="dashboard" class="nav-btn">Dashboard</button>
+        <button data-view="registrarJugador" class="nav-btn">Registrar Jugador</button>
+        <button data-view="registrarAdmin" class="nav-btn">Registrar Administrativo</button>
+        <button data-view="registrarSoporte" class="nav-btn">Registrar Soporte</button>
+        <button data-view="entrenamientos" class="nav-btn">Gestionar Entrenamientos</button>
+        <button data-view="analisis" class="nav-btn">Análisis de Jugadores</button>
+        <div class="sep"></div>
+        <details class="tools" aria-label="Herramientas" style="margin:4px 0;">
+          <summary class="nav-btn" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">Herramientas<span aria-hidden="true">▾</span></summary>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;padding-left:6px;">
+            <button id="exportBtn" class="nav-btn" style="padding-left:12px;">Exportar Datos (JSON)</button>
+            <label class="nav-btn filelabel" style="padding-left:12px;">Importar JSON
+              <input id="importFile" type="file" accept="application/json">
+            </label>
+          </div>
+        </details>
+        <button id="logoutBtn" class="nav-btn danger">Cerrar Sesión</button>
+      </nav>
+    </aside>
+
+    <section class="mainpanel" id="mainpanel" tabindex="0">
+      <!-- Views -->
+      <div id="view-login" class="view active">
+        <div class="card auth">
+          <h2>Iniciar Sesión</h2>
+          <form id="loginForm">
+            <label>Usuario<input name="username" required></label>
+            <label>Contraseña<input name="password" type="password" required></label>
+            <div class="row">
+              <button type="submit" class="btn primary">Entrar</button>
+              <button type="button" id="showRegister" class="btn ghost">Registrar</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card auth register" id="registerCard" hidden>
+          <h2>Registro de Usuario</h2>
+          <form id="registerForm">
+            <label>Nombre completo<input name="name" required></label>
+            <label>Email<input name="email" type="email" required></label>
+            <label>Teléfono<input name="phone" required></label>
+            <label>Nombre de usuario<input name="username" required></label>
+            <label>Contraseña<input name="password" type="password" required></label>
+            <div class="row">
+              <button type="submit" class="btn primary">Registrar</button>
+              <button type="button" id="cancelRegister" class="btn ghost">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div id="view-dashboard" class="view">
+        <header class="panel-header">
+          <h2>Dashboard</h2>
+          <div class="actions">
+            <div class="chip" id="notificationChip"></div>
+          </div>
+        </header>
+
+        <section class="cards" id="statsCards">
+          <!-- dynamic stats -->
+        </section>
+
+        <section class="list preview" id="recentList">
+          <h3>Jugadores recientes</h3>
+          <ul id="recentPlayers"></ul>
+        </section>
+      </div>
+
+      <div id="view-registrarJugador" class="view">
+        <h2>Registrar Jugador</h2>
+        <form id="playerForm" class="form-grid">
+          <label>Nombre completo<input name="name" required></label>
+          <label>Edad<input name="age" type="number" min="15" max="60" required></label>
+          <label>Posición
+            <select name="position" required>
+              <option value="Delantero">Delantero</option>
+              <option value="Mediocampista">Mediocampista</option>
+              <option value="Defensor">Defensor</option>
+              <option value="Portero">Portero</option>
+            </select>
+          </label>
+          <label>Número de camiseta<input name="number" type="number" min="1" required></label>
+          <label>Estado
+            <select name="status">
+              <option>Activo</option><option>Suspendido</option><option>Retirado</option>
+            </select>
+          </label>
+          <label>Rendimiento
+            <select name="performance">
+              <option>Pendiente de evaluación</option><option>Bueno</option><option>Bajo</option>
+            </select>
+          </label>
+          <label>Goles<input name="goals" type="number" min="0" value="0"></label>
+          <label>Asistencias<input name="assists" type="number" min="0" value="0"></label>
+          <label>Minutos jugados<input name="minutes" type="number" min="0" value="0"></label>
+          <label>Tarjetas<input name="cards" type="number" min="0" value="0"></label>
+          <label>Fecha de ingreso<input name="joined" type="date" required></label>
+          <label>Observaciones<textarea name="notes"></textarea></label>
+          <div class="fullrow row">
+            <button type="submit" class="btn primary">Guardar jugador</button>
+            <button type="button" id="resetPlayer" class="btn ghost">Limpiar</button>
+          </div>
+        </form>
+
+        <section class="list" id="playersListSection">
+          <h3>Lista de jugadores</h3>
+          <div class="filters">
+            <input id="searchPlayers" placeholder="Buscar por nombre o número">
+            <select id="filterPosition"><option value="">Todas las posiciones</option><option>Delantero</option><option>Mediocampista</option><option>Defensor</option><option>Portero</option></select>
+            <select id="filterStatus"><option value="">Todos los estados</option><option>Activo</option><option>Suspendido</option><option>Retirado</option></select>
+          </div>
+          <ul id="playersList"></ul>
+        </section>
+      </div>
+
+      <div id="view-registrarAdmin" class="view">
+        <h2>Registrar Personal Administrativo</h2>
+        <form id="adminForm" class="form-grid">
+          <label>Nombre completo<input name="name" required></label>
+          <label>Cargo<input name="role" required></label>
+          <label>Teléfono<input name="phone" required></label>
+          <label>Email<input name="email" type="email" required></label>
+          <label>Fecha de contratación<input name="hired" type="date" required></label>
+          <div class="fullrow row">
+            <button class="btn primary" type="submit">Guardar</button>
+            <button type="button" id="resetAdmin" class="btn ghost">Limpiar</button>
+          </div>
+        </form>
+
+        <section class="list" id="adminsListSection">
+          <h3>Administrativos</h3>
+          <ul id="adminsList"></ul>
+        </section>
+      </div>
+
+      <div id="view-registrarSoporte" class="view">
+        <h2>Registrar Personal de Soporte</h2>
+        <form id="supportForm" class="form-grid">
+          <label>Nombre completo<input name="name" required></label>
+          <label>Rol<input name="role" required></label>
+          <label>Teléfono<input name="phone" required></label>
+          <label>Email<input name="email" type="email" required></label>
+          <label>Fecha de contratación<input name="hired" type="date" required></label>
+          <div class="fullrow row">
+            <button class="btn primary" type="submit">Guardar</button>
+            <button type="button" id="resetSupport" class="btn ghost">Limpiar</button>
+          </div>
+        </form>
+
+        <section class="list" id="supportListSection">
+          <h3>Personal de soporte</h3>
+          <ul id="supportList"></ul>
+        </section>
+      </div>
+
+      <div id="view-entrenamientos" class="view">
+        <h2>Gestionar Entrenamientos</h2>
+        <form id="trainingForm" class="form-grid">
+          <label>Fecha<input name="date" type="date" required></label>
+          <label>Hora<input name="time" type="time" required></label>
+          <label>Tipo
+            <select name="type">
+              <option>Táctico</option><option>Físico</option><option>Técnico</option>
+            </select>
+          </label>
+          <label>Asistencia (IDs separados por coma)<input name="attendance" placeholder="1,3,5"></label>
+          <label>Notas<textarea name="notes"></textarea></label>
+          <div class="fullrow row">
+            <button class="btn primary" type="submit">Guardar sesión</button>
+            <button type="button" id="resetTraining" class="btn ghost">Limpiar</button>
+          </div>
+        </form>
+
+        <section class="list" id="trainingListSection">
+          <h3>Sesiones</h3>
+          <ul id="trainingList"></ul>
+        </section>
+      </div>
+
+      <div id="view-analisis" class="view">
+        <h2>Análisis de Jugadores</h2>
+        <div class="filters">
+          <input id="searchAnalisis" placeholder="Buscar por nombre">
+          <select id="analisisPosition"><option value="">Todas las posiciones</option><option>Delantero</option><option>Mediocampista</option><option>Defensor</option><option>Portero</option></select>
+          <select id="analisisStatus"><option value="">Todos los estados</option><option>Activo</option><option>Suspendido</option><option>Retirado</option></select>
+          <select id="analisisPerformance"><option value="">Todos rendimientos</option><option>Bueno</option><option>Bajo</option><option>Pendiente de evaluación</option></select>
+        </div>
+        <div class="grid-two">
+          <ul id="analisisList" class="list"></ul>
+          <div id="playerProfile" class="card profile">
+            <p>Seleccione un jugador para ver su perfil</p>
+          </div>
+        </div>
+      </div>
+
+      <footer class="panel-footer">
+        <div class="footer-content">
+          <div class="copyright">
+            <strong>© <span id="year"></span> Carlos Alfredo Castillo Flores</strong>
+            <div class="copyright-sub">Todos los derechos reservados. ControlFut — Gestión de rendimiento deportivo.</div>
+          </div>
+        </div>
+      </footer>
+    </section>
+  </main>
+
+  <!-- Help modal -->
+  <div id="helpModal" class="modal" aria-hidden="true" role="dialog" aria-label="Ayuda de ControlFut" >
+    <div class="modal-backdrop" data-dismiss="modal"></div>
+    <div class="modal-card" role="document">
+      <header class="modal-header">
+        <h3>Ayuda — ControlFut</h3>
+        <button class="modal-close" aria-label="Cerrar" data-dismiss="modal">×</button>
+      </header>
+      <div class="modal-body">
+        <section>
+          <h4>Introducción</h4>
+          <p>ControlFut es una aplicación ligera para gestionar jugadores, personal y sesiones de entrenamiento. Su objetivo es centralizar datos del equipo y facilitar el análisis y el seguimiento.</p>
+        </section>
+        <section>
+          <h4>Opciones principales</h4>
+          <ul>
+            <li><strong>Dashboard:</strong> Resumen de estadísticas y jugadores recientes.</li>
+            <li><strong>Registrar Jugador:</strong> Formulario para añadir o editar jugadores y listado con filtros.</li>
+            <li><strong>Registrar Administrativo:</strong> Añadir personal administrativo del club.</li>
+            <li><strong>Registrar Soporte:</strong> Añadir personal de soporte (fisioterapeutas, médicos).</li>
+            <li><strong>Gestionar Entrenamientos:</strong> Crear sesiones, registrar asistencia y ver lista de sesiones.</li>
+            <li><strong>Análisis de Jugadores:</strong> Filtrar jugadores por posición/estado/rendimiento y ver perfil detallado.</li>
+            <li><strong>Herramientas:</strong> Exportar datos a JSON e importar JSON para restaurar o transferir información.</li>
+          </ul>
+        </section>
+        <section>
+          <h4>Ejemplos de uso</h4>
+          <ul>
+            <li><em>Registrar un jugador:</em> Ve a "Registrar Jugador", completa datos (nombre, número, posición) y presiona "Guardar jugador".</li>
+            <li><em>Marcar asistencia en una sesión:</em> En "Gestionar Entrenamientos" crea una sesión y coloca IDs de jugadores separados por comas (por ejemplo "p1,p3") para registrar asistencia.</li>
+            <li><em>Exportar datos:</em> Abre "Herramientas" y selecciona "Exportar Datos (JSON)" para descargar un archivo con toda la base de datos.</li>
+            <li><em>Ver perfil y agregar nota:</em> Desde cualquier listado presiona "Ver" en un jugador, luego "Agregar nota" para guardar observaciones de seguimiento.</li>
+          </ul>
+        </section>
+        <footer class="modal-footer">
+          <div style="font-size:0.9rem;color:#333"><strong>© <span id="helpYear"></span> Carlos Alfredo Castillo Flores</strong><div style="font-size:0.85rem;color:var(--muted)">Todos los derechos reservados. ControlFut — Gestión de rendimiento deportivo.</div></div>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Floating help button -->
+  <button id="helpBtn" class="help-fab" aria-label="Ayuda">?</button>
+</body>
+</html>
