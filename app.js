@@ -6,7 +6,9 @@ import { defaultData, loadAll, saveAll } from './storage.js';
 import { uid, toast } from './utils.js';
 
 let store = loadAll();
-let sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
+// Always start unauthenticated when the app or browser reloads:
+let sessionUser = null;
+localStorage.removeItem('sessionUser');
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('year').textContent = new Date().getFullYear();
