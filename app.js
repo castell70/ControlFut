@@ -436,82 +436,140 @@ function renderAnalisisDatos(){
     </section>
   `;
 
-  // Build a performance score and comment for each player
-  const perfMap = { 'Bueno': 20, 'Pendiente de evaluación': 6, 'Bajo': -4 };
-  // compute score: weighted combination (goals*4 + assists*3 + minutes/120 - cards*2 + perfMap)
-  const playersWithScore = store.jugadores.map(p=>{
-    const goals = Number(p.goals || 0);
-    const assists = Number(p.assists || 0);
-    const minutes = Number(p.minutes || 0);
-    const cards = Number(p.cards || 0);
-    const perfBase = perfMap[p.performance] || 0;
-    const score = Math.round(goals*4 + assists*3 + (minutes/120) - (cards*2) + perfBase);
-    // auto-comments based on data
-    const comments = [];
-    if (goals >= 8) comments.push('Alto aporte goleador');
-    else if (goals >= 4) comments.push('Contribución de gol sólida');
-    else if (goals === 0) comments.push('Sin goles registrados');
-
-    if (assists >= 6) comments.push('Excelente asistente');
-    else if (assists >= 2) comments.push('Aporta juego colectivo');
-
-    if (minutes >= 1000) comments.push('Jugador habitual');
-    else if (minutes < 200) comments.push('Poca participación');
-
-    if (cards >= 4) comments.push('Revisar disciplina (tarjetas frecuentes)');
-    if (String(p.status).toLowerCase() === 'lesionado') comments.push('Actualmente lesionado');
-
-    if (p.performance === 'Pendiente de evaluación') comments.push('Requiere evaluación técnica');
-
-    const comment = comments.length ? comments.join(' · ') : 'Sin observaciones destacadas';
-    return { ...p, score, comment, goals, assists, minutes, cards };
-  });
-
-  // sort by score desc, then goals desc
-  playersWithScore.sort((a,b)=> {
-    if (b.score !== a.score) return b.score - a.score;
-    return (b.goals - a.goals) || (a.name.localeCompare(b.name));
-  });
-
-  // build table rows
-  const rows = playersWithScore.map((p, i)=>`
-    <tr>
-      <td style="padding:8px 10px">${i+1}</td>
-      <td style="padding:8px 10px"><strong>${p.name}</strong><div class="meta" style="margin-top:4px">${p.position} • #${p.number || '—'}</div></td>
-      <td style="padding:8px 10px;text-align:center">${p.goals}</td>
-      <td style="padding:8px 10px;text-align:center">${p.assists}</td>
-      <td style="padding:8px 10px;text-align:center">${p.cards}</td>
-      <td style="padding:8px 10px;text-align:center">${Math.round(p.minutes)}</td>
-      <td style="padding:8px 10px;text-align:center"><strong>${p.score}</strong></td>
-      <td style="padding:8px 10px;max-width:320px">${p.comment}</td>
-    </tr>
-  `).join('');
-
-  const tableHtml = `
-    <div class="card" style="overflow:auto">
-      <h3 style="margin-top:0;margin-bottom:8px">Resumen rápido</h3>
-      <p style="margin:0 0 12px;color:var(--muted)">Tabla de rendimiento — clasificada de mayor a menor según una puntuación compuesta por goles, asistencias, minutos jugados, tarjetas y evaluación de rendimiento.</p>
-      <table style="width:100%;border-collapse:collapse;font-size:0.95rem">
-        <thead>
-          <tr style="text-align:left;color:#08303a">
-            <th style="padding:8px 10px;width:36px">#</th>
-            <th style="padding:8px 10px">Jugador</th>
-            <th style="padding:8px 10px;text-align:center">Goles</th>
-            <th style="padding:8px 10px;text-align:center">Asist.</th>
-            <th style="padding:8px 10px;text-align:center">Tarj.</th>
-            <th style="padding:8px 10px;text-align:center">Min.</th>
-            <th style="padding:8px 10px;text-align:center">Punt.</th>
-            <th style="padding:8px 10px">Comentarios de análisis</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows || '<tr><td colspan="8" style="padding:12px;color:var(--muted)">No hay jugadores registrados.</td></tr>'}
-        </tbody>
-      </table>
+  // Filters UI (Posición, Estado, Rendimiento)
+  const filtersHtml = `
+    <div class="card" style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+      <label style="margin:0"><strong>Posición</strong>
+        <select id="ad-pos-filter" style="margin-left:8px">
+          <option value="">Todas</option>
+          <option>Delantero</option><option>Mediocampista</option><option>Defensor</option><option>Portero</option>
+        </select>
+      </label>
+      <label style="margin:0"><strong>Estado</strong>
+        <select id="ad-status-filter" style="margin-left:8px">
+          <option value="">Todos</option>
+          <option>Activo</option><option>Lesionado</option><option>Suspendido</option><option>Retirado</option>
+        </select>
+      </label>
+      <label style="margin:0"><strong>Rendimiento</strong>
+        <select id="ad-perf-filter" style="margin-left:8px">
+          <option value="">Todos</option>
+          <option>Bueno</option><option>Pendiente de evaluación</option><option>Bajo</option>
+        </select>
+      </label>
+      <div style="margin-left:auto;color:var(--muted);font-size:0.95rem">Filtra la tabla para agrupar jugadores</div>
     </div>
   `;
 
-  el.innerHTML = `<h2>Análisis de datos</h2>${kpiHtml}${tableHtml}`;
+  // read filter values (defaults '')
+  // we'll build the players list after applying filters
+  // Build a performance score and comment for each player
+  const perfMap = { 'Bueno': 20, 'Pendiente de evaluación': 6, 'Bajo': -4 };
+
+  // apply filters
+  const posFilter = (document.getElementById('ad-pos-filter') && document.getElementById('ad-pos-filter').value) || '';
+  const statusFilter = (document.getElementById('ad-status-filter') && document.getElementById('ad-status-filter').value) || '';
+  const perfFilter = (document.getElementById('ad-perf-filter') && document.getElementById('ad-perf-filter').value) || '';
+
+  // If filters are not yet in DOM (first render), we will create content first then attach listeners and re-run
+  // Prepare the players array and compute scores after ensuring filters exist in DOM
+  const computeAndRender = ()=> {
+    // gather current filter values
+    const pos = (document.getElementById('ad-pos-filter') && document.getElementById('ad-pos-filter').value) || '';
+    const status = (document.getElementById('ad-status-filter') && document.getElementById('ad-status-filter').value) || '';
+    const perf = (document.getElementById('ad-perf-filter') && document.getElementById('ad-perf-filter').value) || '';
+
+    // filter players according to selected filters
+    const candidates = store.jugadores.filter(p=>{
+      if (pos && p.position !== pos) return false;
+      if (status && p.status !== status) return false;
+      if (perf && p.performance !== perf) return false;
+      return true;
+    });
+
+    const playersWithScore = candidates.map(p=>{
+      const goals = Number(p.goals || 0);
+      const assists = Number(p.assists || 0);
+      const minutes = Number(p.minutes || 0);
+      const cards = Number(p.cards || 0);
+      const perfBase = perfMap[p.performance] || 0;
+      const score = Math.round(goals*4 + assists*3 + (minutes/120) - (cards*2) + perfBase);
+      const comments = [];
+      if (goals >= 8) comments.push('Alto aporte goleador');
+      else if (goals >= 4) comments.push('Contribución de gol sólida');
+      else if (goals === 0) comments.push('Sin goles registrados');
+      if (assists >= 6) comments.push('Excelente asistente');
+      else if (assists >= 2) comments.push('Aporta juego colectivo');
+      if (minutes >= 1000) comments.push('Jugador habitual');
+      else if (minutes < 200) comments.push('Poca participación');
+      if (cards >= 4) comments.push('Revisar disciplina (tarjetas frecuentes)');
+      if (String(p.status).toLowerCase() === 'lesionado') comments.push('Actualmente lesionado');
+      if (p.performance === 'Pendiente de evaluación') comments.push('Requiere evaluación técnica');
+      const comment = comments.length ? comments.join(' · ') : 'Sin observaciones destacadas';
+      return { ...p, score, comment, goals, assists, minutes, cards };
+    });
+
+    playersWithScore.sort((a,b)=> {
+      if (b.score !== a.score) return b.score - a.score;
+      return (b.goals - a.goals) || (a.name.localeCompare(b.name));
+    });
+
+    const rows = playersWithScore.map((p, i)=>`
+      <tr>
+        <td style="padding:8px 10px">${i+1}</td>
+        <td style="padding:8px 10px"><strong>${p.name}</strong><div class="meta" style="margin-top:4px">${p.position} • #${p.number || '—'}</div></td>
+        <td style="padding:8px 10px;text-align:center">${p.goals}</td>
+        <td style="padding:8px 10px;text-align:center">${p.assists}</td>
+        <td style="padding:8px 10px;text-align:center">${p.cards}</td>
+        <td style="padding:8px 10px;text-align:center">${Math.round(p.minutes)}</td>
+        <td style="padding:8px 10px;text-align:center"><strong>${p.score}</strong></td>
+        <td style="padding:8px 10px;max-width:320px">${p.comment}</td>
+      </tr>
+    `).join('');
+
+    const tableHtml = `
+      <div class="card" style="overflow:auto">
+        <h3 style="margin-top:0;margin-bottom:8px">Resumen rápido</h3>
+        <p style="margin:0 0 12px;color:var(--muted)">Tabla de rendimiento — clasificada de mayor a menor según una puntuación compuesta por goles, asistencias, minutos jugados, tarjetas y evaluación de rendimiento.</p>
+        <table style="width:100%;border-collapse:collapse;font-size:0.95rem">
+          <thead>
+            <tr style="text-align:left;color:#08303a">
+              <th style="padding:8px 10px;width:36px">#</th>
+              <th style="padding:8px 10px">Jugador</th>
+              <th style="padding:8px 10px;text-align:center">Goles</th>
+              <th style="padding:8px 10px;text-align:center">Asist.</th>
+              <th style="padding:8px 10px;text-align:center">Tarj.</th>
+              <th style="padding:8px 10px;text-align:center">Min.</th>
+              <th style="padding:8px 10px;text-align:center">Punt.</th>
+              <th style="padding:8px 10px">Comentarios de análisis</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows || '<tr><td colspan="8" style="padding:12px;color:var(--muted)">No hay jugadores que coincidan con los filtros.</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    `;
+    // Insert table below filters and KPIs
+    el.querySelectorAll('.ad-table-placeholder').forEach(n=>n.remove());
+    el.insertAdjacentHTML('beforeend', `<div class="ad-table-placeholder">${tableHtml}</div>`);
+  };
+
+  // Render initial structure (KPIs + filters)
+  el.innerHTML = `<h2>Análisis de datos</h2>${kpiHtml}${filtersHtml}`;
+
+  // Attach change listeners to filters so user interactions update the table
+  ['ad-pos-filter','ad-status-filter','ad-perf-filter'].forEach(id=>{
+    const node = document.getElementById(id);
+    if (node) {
+      node.addEventListener('change', ()=> {
+        computeAndRender();
+      });
+    }
+  });
+
+  // initial compute and render
+  computeAndRender();
 }
 
 function renderDashboard(){
