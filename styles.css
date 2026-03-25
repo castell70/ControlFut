@@ -97,6 +97,15 @@ body{
 .panel-header h2{ margin:0 }
 .panel-header .dashboard-user{ color:var(--muted); font-weight:600; margin-left:8px; font-size:0.95rem; }
 .cards{ display:grid; gap:12px; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); margin-bottom:14px }
+
+/* Center content inside KPI cards in the dashboard */
+.cards .card {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
 .card{ background:var(--card); padding:12px; border-radius:var(--radius); box-shadow:var(--shadow) }
 .card.auth{ max-width:520px; margin:18px auto }
 .auth form label, .form-grid label{ display:block; margin-bottom:8px; font-size:0.9rem }
