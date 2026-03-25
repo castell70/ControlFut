@@ -10,7 +10,9 @@
 <body>
   <header class="topbar" role="banner" aria-label="Barra de menú ControlFut">
     <div class="brand">ControlFut</div>
-    <div class="powered" aria-hidden="false">Powered by <span class="itcpo">ITCPO</span></div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="powered" aria-hidden="false">Powered by <span class="itcpo">ITCPO</span></div>
+    </div>
   </header>
 
   <main class="app" role="main">
@@ -23,8 +25,9 @@
         <button data-view="registrarJugador" class="nav-btn">Registrar Jugador</button>
         <button data-view="registrarAdmin" class="nav-btn">Registrar Administrativo</button>
         <button data-view="registrarSoporte" class="nav-btn">Registrar Soporte</button>
-        <button data-view="entrenamientos" class="nav-btn">Gestionar Entrenamientos</button>
-        <button data-view="analisis" class="nav-btn">Análisis de Jugadores</button>
+        <button data-view="entrenamientos" class="nav-btn">Entrenamientos</button>
+        <button data-view="analisis" class="nav-btn">Estadísticas</button>
+        <button data-view="analisisDatos" class="nav-btn">Análisis de datos</button>
         <div class="sep"></div>
         <details class="tools" aria-label="Herramientas" style="margin:4px 0;">
           <summary class="nav-btn" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">Herramientas<span aria-hidden="true">▾</span></summary>
@@ -33,10 +36,17 @@
             <label class="nav-btn filelabel" style="padding-left:12px;">Importar JSON
               <input id="importFile" type="file" accept="application/json">
             </label>
+            <button id="resetBtn" class="nav-btn danger" style="padding-left:12px;background:transparent;border:0;text-align:left;">Reiniciar datos</button>
           </div>
         </details>
         <button id="logoutBtn" class="nav-btn danger">Cerrar Sesión</button>
       </nav>
+
+      <footer class="footer-content" aria-hidden="false" style="margin-top:auto;">
+        <div class="copyright" style="text-align:center;width:100%;padding:8px 6px;color:rgba(11,17,20,0.9);font-weight:600;">
+          © <span id="year"></span> Carlos Alfredo Castillo Flores
+        </div>
+      </footer>
     </aside>
 
     <section class="mainpanel" id="mainpanel" tabindex="0">
@@ -72,7 +82,7 @@
 
       <div id="view-dashboard" class="view">
         <header class="panel-header">
-          <h2>Dashboard</h2>
+          <h2>Dashboard <span id="dashboardUser" class="dashboard-user" aria-hidden="true"></span></h2>
           <div class="actions">
             <div class="chip" id="notificationChip"></div>
           </div>
@@ -83,8 +93,17 @@
         </section>
 
         <section class="list preview" id="recentList">
-          <h3>Jugadores recientes</h3>
-          <ul id="recentPlayers"></ul>
+          <h3>Jugadores</h3>
+          <div class="grid-two" style="gap:12px;">
+            <section class="list" id="recentGroupRecent">
+              <h4>Recientes (últimos 2 años)</h4>
+              <ul id="recentPlayersRecent"></ul>
+            </section>
+            <section class="list" id="recentGroupOld">
+              <h4>Antiguos (más de 2 años)</h4>
+              <ul id="recentPlayersOld"></ul>
+            </section>
+          </div>
         </section>
       </div>
 
@@ -104,7 +123,10 @@
           <label>Número de camiseta<input name="number" type="number" min="1" required></label>
           <label>Estado
             <select name="status">
-              <option>Activo</option><option>Suspendido</option><option>Retirado</option>
+              <option>Activo</option>
+              <option>Lesionado</option>
+              <option>Suspendido</option>
+              <option>Retirado</option>
             </select>
           </label>
           <label>Rendimiento
@@ -129,7 +151,8 @@
           <div class="filters">
             <input id="searchPlayers" placeholder="Buscar por nombre o número">
             <select id="filterPosition"><option value="">Todas las posiciones</option><option>Delantero</option><option>Mediocampista</option><option>Defensor</option><option>Portero</option></select>
-            <select id="filterStatus"><option value="">Todos los estados</option><option>Activo</option><option>Suspendido</option><option>Retirado</option></select>
+            <select id="filterStatus"><option value="">Todos los estados</option><option>Activo</option><option>Lesionado</option><option>Suspendido</option><option>Retirado</option></select>
+            <select id="filterPerformance"><option value="">Todos rendimientos</option><option>Pendiente de evaluación</option><option>Bueno</option><option>Bajo</option></select>
           </div>
           <ul id="playersList"></ul>
         </section>
@@ -176,7 +199,7 @@
       </div>
 
       <div id="view-entrenamientos" class="view">
-        <h2>Gestionar Entrenamientos</h2>
+        <h2>Entrenamientos</h2>
         <form id="trainingForm" class="form-grid">
           <label>Fecha<input name="date" type="date" required></label>
           <label>Hora<input name="time" type="time" required></label>
@@ -185,7 +208,7 @@
               <option>Táctico</option><option>Físico</option><option>Técnico</option>
             </select>
           </label>
-          <label>Asistencia (IDs separados por coma)<input name="attendance" placeholder="1,3,5"></label>
+          <label style="grid-column: span 2;">Asistencia (IDs separados por coma)<input name="attendance" placeholder="1,3,5"></label>
           <label>Notas<textarea name="notes"></textarea></label>
           <div class="fullrow row">
             <button class="btn primary" type="submit">Guardar sesión</button>
@@ -200,11 +223,11 @@
       </div>
 
       <div id="view-analisis" class="view">
-        <h2>Análisis de Jugadores</h2>
+        <h2>Estadísticas</h2>
         <div class="filters">
           <input id="searchAnalisis" placeholder="Buscar por nombre">
           <select id="analisisPosition"><option value="">Todas las posiciones</option><option>Delantero</option><option>Mediocampista</option><option>Defensor</option><option>Portero</option></select>
-          <select id="analisisStatus"><option value="">Todos los estados</option><option>Activo</option><option>Suspendido</option><option>Retirado</option></select>
+          <select id="analisisStatus"><option value="">Todos los estados</option><option>Activo</option><option>Lesionado</option><option>Suspendido</option><option>Retirado</option></select>
           <select id="analisisPerformance"><option value="">Todos rendimientos</option><option>Bueno</option><option>Bajo</option><option>Pendiente de evaluación</option></select>
         </div>
         <div class="grid-two">
@@ -215,14 +238,13 @@
         </div>
       </div>
 
-      <footer class="panel-footer">
-        <div class="footer-content">
-          <div class="copyright">
-            <strong>© <span id="year"></span> Carlos Alfredo Castillo Flores</strong>
-            <div class="copyright-sub">Todos los derechos reservados. ControlFut — Gestión de rendimiento deportivo.</div>
-          </div>
+      <div id="view-analisisDatos" class="view">
+        <h2>Análisis de datos</h2>
+        <div class="card">
+          <p style="margin:0;color:var(--muted)">Panel de análisis de datos — aquí puedes agregar visualizaciones, exportes o resúmenes avanzados.</p>
         </div>
-      </footer>
+      </div>
+      
     </section>
   </main>
 
@@ -237,31 +259,84 @@
       <div class="modal-body">
         <section>
           <h4>Introducción</h4>
-          <p>ControlFut es una aplicación ligera para gestionar jugadores, personal y sesiones de entrenamiento. Su objetivo es centralizar datos del equipo y facilitar el análisis y el seguimiento.</p>
+          <p>ControlFut centraliza la gestión de tu equipo: jugadores, personal administrativo y de soporte, sesiones de entrenamiento y análisis. Está pensado para ser sencillo, rápido y usable tanto en escritorio como en móviles.</p>
         </section>
+
         <section>
-          <h4>Opciones principales</h4>
+          <h4>Menú y descripciones detalladas</h4>
           <ul>
-            <li><strong>Dashboard:</strong> Resumen de estadísticas y jugadores recientes.</li>
-            <li><strong>Registrar Jugador:</strong> Formulario para añadir o editar jugadores y listado con filtros.</li>
-            <li><strong>Registrar Administrativo:</strong> Añadir personal administrativo del club.</li>
-            <li><strong>Registrar Soporte:</strong> Añadir personal de soporte (fisioterapeutas, médicos).</li>
-            <li><strong>Gestionar Entrenamientos:</strong> Crear sesiones, registrar asistencia y ver lista de sesiones.</li>
-            <li><strong>Análisis de Jugadores:</strong> Filtrar jugadores por posición/estado/rendimiento y ver perfil detallado.</li>
-            <li><strong>Herramientas:</strong> Exportar datos a JSON e importar JSON para restaurar o transferir información.</li>
+            <li><strong>Dashboard:</strong> Vista general con KPIs (total de jugadores, activos, lesionados, rendimiento), y dos listas de jugadores: recientes (ingresados en los últimos 2 años) y antiguos. Útil para ver el estado general del plantel.</li>
+            <li><strong>Registrar Jugador:</strong> Formulario para añadir nuevos jugadores o editar existentes. Campos importantes: nombre, número (único entre activos), posición, estado y rendimiento. Después de guardar, el listado se actualiza automáticamente.</li>
+            <li><strong>Registrar Administrativo:</strong> Añade personal administrativo (gerente, contador, etc.). El listado muestra email, teléfono y fecha de contratación.</li>
+            <li><strong>Registrar Soporte:</strong> Añade personal de apoyo (médico, fisioterapeuta). Igual que administrativos, con lista y edición.</li>
+            <li><strong>Entrenamientos:</strong> Crea sesiones con fecha/hora/tipo y registra asistencia mediante IDs de jugadores separados por comas (ej. "p1,p3"). El listado muestra asistentes y permite editar o eliminar sesiones.</li>
+            <li><strong>Estadísticas:</strong> (antes "Análisis de Jugadores") Lista filtrable por posición/estado/rendimiento; al pulsar "Ver" se abre una tarjeta dividida en dos: datos del jugador y un gráfico de columnas con Goles, Asistencias y Tarjetas (tooltip al pasar el mouse).</li>
+            <li><strong>Análisis de datos:</strong> Panel con KPIs agregadas y un "Resumen rápido" que genera una tabla con una puntuación compuesta para cada jugador (goles, asistencias, minutos, tarjetas y evaluación). La tabla incluye comentarios automáticos que ayudan a priorizar seguimientos.</li>
+            <li><strong>Herramientas:</strong> Contiene:
+              <ul>
+                <li><em>Exportar Datos (JSON):</em> Descarga todos los datos guardados en la aplicación en un archivo JSON.</li>
+                <li><em>Importar JSON:</em> Reemplaza los datos actuales por un archivo JSON compatible; para mayor seguridad se solicita escribir "IMPORTAR" antes de ejecutar la acción.</li>
+                <li><em>Reiniciar datos:</em> Borra y restaura los datos por defecto; requiere escribir "REINICIAR" para confirmar.</li>
+              </ul>
+            </li>
+            <li><strong>Cerrar Sesión:</strong> Cierra la sesión actual tras confirmar en el cuadro de diálogo integrado.</li>
           </ul>
         </section>
+
         <section>
-          <h4>Ejemplos de uso</h4>
+          <h4>Guías paso a paso y buenas prácticas</h4>
+          <ol>
+            <li><strong>Alta de jugador sin duplicados:</strong> Al registrar, asegúrate de asignar un número de camiseta no usado por otro jugador con estado "Activo". Si existe un duplicado el sistema avisará.</li>
+            <li><strong>Editar un jugador:</strong> En la lista de "Registrar Jugador" pulsa "Editar" en el jugador deseado; el formulario se rellenará con los datos actuales; tras guardar, los listados se actualizan.</li>
+            <li><strong>Agregar notas de seguimiento:</strong> En "Estadísticas" o en la lista de jugadores pulsa "Ver" y usa "Agregar nota" para registrar observaciones; las notas quedan guardadas en el historial de análisis.</li>
+            <li><strong>Registrar asistencia correctamente:</strong> Usa los IDs de jugador (ej. p1,p2) separados por comas; el sistema intentará mostrar los nombres asociados en la vista de sesiones.</li>
+            <li><strong>Importar/Exportar y seguridad de datos:</strong> Antes de importar, exporta tu estado actual como respaldo. La importación solicita una validación de texto para evitar ejecuciones accidentales. Si el JSON no contiene la estructura esperada (usuarios, jugadores, personalAdministrativo, personalSoporte, entrenamientos, analisisNotas) la importación fallará y mostrarás un error.</li>
+            <li><strong>Reinicio de datos:</strong> Esta acción restaura los datos de ejemplo y elimina los cambios; el cuadro exige escribir "REINICIAR" como confirmación consciente.</li>
+          </ol>
+        </section>
+
+        <section>
+          <h4>Ejemplos prácticos ampliados</h4>
           <ul>
-            <li><em>Registrar un jugador:</em> Ve a "Registrar Jugador", completa datos (nombre, número, posición) y presiona "Guardar jugador".</li>
-            <li><em>Marcar asistencia en una sesión:</em> En "Gestionar Entrenamientos" crea una sesión y coloca IDs de jugadores separados por comas (por ejemplo "p1,p3") para registrar asistencia.</li>
-            <li><em>Exportar datos:</em> Abre "Herramientas" y selecciona "Exportar Datos (JSON)" para descargar un archivo con toda la base de datos.</li>
-            <li><em>Ver perfil y agregar nota:</em> Desde cualquier listado presiona "Ver" en un jugador, luego "Agregar nota" para guardar observaciones de seguimiento.</li>
+            <li><strong>Escenario: necesitar un recambio rápido por lesión</strong>
+              <ol>
+                <li>Ve a "Estadísticas" y filtra por posición para encontrar candidatos (por ejemplo "Delantero").</li>
+                <li>Abre el perfil del jugador (Ver) y revisa goles, asistencias y minutos.</li>
+                <li>Usa la columna "Punt." en "Análisis de datos" para comparar rápidamente varios jugadores y revisar comentarios generados (p. ej. "Poca participación" o "Alto aporte goleador").</li>
+              </ol>
+            </li>
+            <li><strong>Escenario: planificar asistencia a entrenamiento</strong>
+              <ol>
+                <li>En "Entrenamientos" crea la sesión con fecha y hora.</li>
+                <li>En el campo de asistencia introduce IDs separados por coma (ej. "p1,p3,p4").</li>
+                <li>Guarda la sesión; la lista mostrará los nombres y podrás editar si cometiste un error.</li>
+              </ol>
+            </li>
+            <li><strong>Escenario: migración de datos entre instalaciones</strong>
+              <ol>
+                <li>En origen, ve a Herramientas → Exportar Datos (JSON) y descarga el archivo.</li>
+                <li>En destino, abre Herramientas → Importar JSON y selecciona el archivo exportado.</li>
+                <li>Escribe "IMPORTAR" en el cuadro de confirmación para ejecutar la importación segura.</li>
+              </ol>
+            </li>
           </ul>
         </section>
+
+        <section>
+          <h4>Atajos, accesibilidad y notas técnicas</h4>
+          <ul>
+            <li>Los diálogos de confirmación (importar, reiniciar, cerrar sesión) se muestran en cuadros integrados en la interfaz para evitar modales del navegador y fomentar acciones deliberadas.</li>
+            <li>La app está optimizada para móvil: el perfil y las tarjetas se adaptan y se desplazan suavemente sin necesidad de instrucciones adicionales.</li>
+            <li>Si pierdes la sesión, vuelve a iniciar con el usuario registrado; el panel lateral se oculta hasta iniciar sesión para proteger los datos.</li>
+            <li>En export/import se valida que la estructura JSON contenga las claves esperadas; si el archivo no las tiene, recibirás un mensaje de error explicando la clave faltante.</li>
+          </ul>
+        </section>
+
         <footer class="modal-footer">
-          <div style="font-size:0.9rem;color:#333"><strong>© <span id="helpYear"></span> Carlos Alfredo Castillo Flores</strong><div style="font-size:0.85rem;color:var(--muted)">Todos los derechos reservados. ControlFut — Gestión de rendimiento deportivo.</div></div>
+          <div style="font-size:0.9rem;color:#333">
+            <strong>© <span id="helpYear"></span> Carlos Alfredo Castillo Flores</strong>
+            <div style="font-size:0.85rem;color:var(--muted)">ControlFut — Gestión de rendimiento deportivo. Si necesitas soporte adicional, consulta la documentación del proyecto o contacta al administrador del sistema.</div>
+          </div>
         </footer>
       </div>
     </div>

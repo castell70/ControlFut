@@ -95,6 +95,7 @@ body{
 .mainpanel{ flex:1; padding:18px; overflow:auto; }
 .panel-header{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px }
 .panel-header h2{ margin:0 }
+.panel-header .dashboard-user{ color:var(--muted); font-weight:600; margin-left:8px; font-size:0.95rem; }
 .cards{ display:grid; gap:12px; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); margin-bottom:14px }
 .card{ background:var(--card); padding:12px; border-radius:var(--radius); box-shadow:var(--shadow) }
 .card.auth{ max-width:520px; margin:18px auto }
@@ -123,11 +124,57 @@ body{
 .profile{ min-height:220px; padding:12px; display:flex; flex-direction:column; gap:8px }
 .profile h4{ margin:0 }
 
+/* chart inside inline profile for análisis */
+.profile .profile-split{ display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; }
+.profile .profile-data{ flex:1 1 240px; min-width:180px; }
+.profile .profile-chart{ width:260px; height:160px; flex:0 0 260px; position:relative; border-radius:8px; background:linear-gradient(180deg,#fff,#fbfeff); display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow); border:1px solid rgba(11,26,20,0.04); padding:8px; }
+.profile .profile-chart canvas{ width:100%; height:100%; display:block; border-radius:6px; }
+.profile .chart-tooltip{
+  position:absolute; pointer-events:none; background:rgba(0,0,0,0.78); color:#fff; padding:6px 8px; border-radius:6px; font-size:0.85rem; transform:translate(-50%, -110%); white-space:nowrap; z-index:10; display:none;
+  box-shadow: 0 6px 18px rgba(4,8,10,0.28);
+}
+
+/* Analisis list layout: two columns on wider screens, single column on narrow screens.
+   Inline profile card inserted under the clicked player */
+#analisisList {
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:grid;
+  gap:10px;
+  grid-template-columns: repeat(1, minmax(0,1fr));
+}
+#analisisList li {
+  background:linear-gradient(180deg,#fff,#fbfeff);
+  padding:10px;
+  border-radius:8px;
+  border:1px solid rgba(11,26,20,0.04);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+}
+@media (min-width:720px){
+  #analisisList { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+/* inline profile card (appears under a specific list item) */
+.inline-profile {
+  grid-column: 1/-1;
+  margin-top:6px;
+  padding:12px;
+  border-radius:8px;
+  background:linear-gradient(180deg,#fff,#fbfeff);
+  border:1px solid rgba(11,26,20,0.04);
+  box-shadow:var(--shadow);
+}
+
 /* small utilities */
 .preview ul{ padding:0; list-style:none; display:flex; gap:8px; overflow:auto }
 
-/* Dashboard recent players: three-column grid on larger screens, single column on narrow screens */
-#recentPlayers{
+/* Dashboard recent players: two-column grid on larger screens, single column on narrow screens
+   Apply to both recent/old grouped lists */
+#recentPlayersRecent, #recentPlayersOld {
   list-style:none;
   margin:0;
   padding:0;
@@ -137,7 +184,7 @@ body{
   max-height:320px;
   overflow:auto;
 }
-#recentPlayers li{
+#recentPlayersRecent li, #recentPlayersOld li {
   background:linear-gradient(180deg,#fff,#fbfeff);
   padding:10px;
   border-radius:8px;
@@ -146,7 +193,8 @@ body{
   color:inherit;
 }
 @media (min-width:760px){
-  #recentPlayers{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+  /* switch to two columns on wider screens */
+  #recentPlayersRecent, #recentPlayersOld { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
 .chip{ padding:6px 8px; background:linear-gradient(90deg,#e7f7f4,#eaf9f6); border-radius:20px; color:var(--green); font-weight:700 }
 
@@ -181,8 +229,38 @@ body{
 .help-fab:active{ transform:translateY(2px) }
 .help-fab:focus{ outline:4px solid rgba(255,122,24,0.18) }
 
-/* Toast */
-.toast{ position:fixed; right:18px; bottom:18px; background:#0b1720; color:#fff; padding:10px 14px; border-radius:8px; opacity:0; transform:translateY(8px); transition:all .28s ease }
+/* Toast (kept for legacy but hidden) */
+.toast{ display:none }
+
+/* Inline message box used for warnings/validation/avisos */
+.message-box{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  border-radius:10px;
+  margin-bottom:12px;
+  box-shadow: 0 8px 20px rgba(8,12,10,0.06);
+  border:1px solid rgba(11,26,20,0.06);
+  background:linear-gradient(180deg,#fff,#fbfeff);
+  color:#0b1720;
+  transition:opacity .22s ease, transform .22s ease;
+  max-width:100%;
+}
+.message-box.hide{ opacity:0; transform:translateY(-6px) }
+
+.message-box .message-content{ flex:1; color:var(--muted); font-size:0.95rem; line-height:1.35; }
+.message-box .message-close{
+  background:transparent; border:0; font-size:1.05rem; padding:6px 8px; cursor:pointer; color:#0b1720; opacity:0.7; border-radius:8px;
+}
+.message-box .message-close:hover{ background:rgba(11,26,20,0.03); opacity:1 }
+
+/* levels */
+.message-box.info{ border-left:4px solid #0b6fa8; }
+.message-box.success{ border-left:4px solid #0b7a5f; }
+.message-box.warning{ border-left:4px solid #ff9a3c; background:linear-gradient(180deg,#fff7ef,#fffdf8); }
+.message-box.error{ border-left:4px solid var(--danger); background:linear-gradient(180deg,#fff6f6,#fffdfd); color:#401212 }
 
 /* Modal: centered, responsive, with backdrop and polished card */
 .modal{
