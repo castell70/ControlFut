@@ -410,6 +410,51 @@ function requireAuth(view){
   return sessionUser != null;
 }
 
+/* Inline confirmation helper: shows a message-box with SÍ/NO and calls callbacks accordingly */
+function showInlineConfirm(options = {}) {
+  const { title = 'Confirmar', message = '', onYes = ()=>{}, onNo = ()=>{} } = options;
+  const container = document.getElementById('mainpanel');
+  if (!container) {
+    // fallback to native confirm
+    if (confirm(message || title)) onYes();
+    else onNo();
+    return;
+  }
+  // avoid duplicate dialogs
+  if (container.querySelector('.inline-confirm-box')) return;
+  const box = document.createElement('div');
+  box.className = 'message-box warning inline-confirm-box';
+  box.setAttribute('role','dialog');
+  box.innerHTML = `
+    <div class="message-content">
+      <strong>${title}</strong><br>
+      ${message}
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+        <button id="inlineYesBtn" class="btn danger" style="padding:8px 12px">SÍ</button>
+        <button id="inlineNoBtn" class="btn ghost" style="padding:8px 12px">NO</button>
+      </div>
+    </div>
+    <button class="message-close" aria-label="Cerrar mensaje">×</button>
+  `;
+  const firstChild = container.querySelector('.view') || container.firstChild;
+  container.insertBefore(box, firstChild);
+
+  const cleanup = ()=> {
+    box.classList.add('hide');
+    setTimeout(()=> box.remove(), 260);
+  };
+  box.querySelector('.message-close').addEventListener('click', ()=> { cleanup(); onNo(); });
+
+  const yesBtn = box.querySelector('#inlineYesBtn');
+  const noBtn = box.querySelector('#inlineNoBtn');
+
+  noBtn.addEventListener('click', ()=> { cleanup(); onNo(); });
+  yesBtn.addEventListener('click', ()=> { cleanup(); onYes(); });
+
+  // focus yes for quick confirmation
+  setTimeout(()=> yesBtn.focus(), 80);
+}
+
 /* Rendering functions */
 function render(){
   // sync store with localStorage
@@ -739,7 +784,21 @@ function renderPlayersList(){
         // ensure it is visible (helpful on small screens)
         setTimeout(()=> profile.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
       }
-      if (action==='del'){ if (!confirm('Eliminar jugador?')) return; store.jugadores = store.jugadores.filter(x=>x.id!==id); localStorage.setItem('jugadores', JSON.stringify(store.jugadores)); toast('Jugador eliminado'); renderPlayersList(); renderDashboard(); }
+      if (action==='del'){
+        showInlineConfirm({
+          title: 'Eliminar jugador',
+          message: '¿Desea eliminar este jugador? Seleccione SÍ para confirmar o NO para cancelar.',
+          onYes: ()=> {
+            store.jugadores = store.jugadores.filter(x=>x.id!==id);
+            localStorage.setItem('jugadores', JSON.stringify(store.jugadores));
+            toast('Jugador eliminado', 2200, 'success');
+            renderPlayersList(); renderDashboard();
+          },
+          onNo: ()=> {
+            toast('Operación cancelada', 1400, 'info');
+          }
+        });
+      }
       if (action==='edit'){ editPlayer(id); }
     });
   });
@@ -824,10 +883,19 @@ function renderAdmins(){
       const id = b.dataset.id;
       const action = b.dataset.action;
       if (action === 'del') {
-        if (!confirm('Eliminar administrativo?')) return;
-        store.personalAdministrativo = store.personalAdministrativo.filter(x=>x.id!==id);
-        localStorage.setItem('personalAdministrativo', JSON.stringify(store.personalAdministrativo));
-        renderAdmins();
+        showInlineConfirm({
+          title: 'Eliminar administrativo',
+          message: '¿Desea eliminar este administrativo? Seleccione SÍ para confirmar o NO para cancelar.',
+          onYes: ()=> {
+            store.personalAdministrativo = store.personalAdministrativo.filter(x=>x.id!==id);
+            localStorage.setItem('personalAdministrativo', JSON.stringify(store.personalAdministrativo));
+            toast('Administrativo eliminado', 2200, 'success');
+            renderAdmins();
+          },
+          onNo: ()=> {
+            toast('Operación cancelada', 1400, 'info');
+          }
+        });
         return;
       }
       if (action === 'edit') {
@@ -890,10 +958,19 @@ function renderSupport(){
     const id = b.dataset.id;
     const action = b.dataset.action || 'del';
     if (action === 'del') {
-      if (!confirm('Eliminar personal de soporte?')) return;
-      store.personalSoporte = store.personalSoporte.filter(x=>x.id!==id);
-      localStorage.setItem('personalSoporte', JSON.stringify(store.personalSoporte));
-      renderSupport();
+      showInlineConfirm({
+        title: 'Eliminar personal de soporte',
+        message: '¿Desea eliminar este miembro del personal de soporte? Seleccione SÍ para confirmar o NO para cancelar.',
+        onYes: ()=> {
+          store.personalSoporte = store.personalSoporte.filter(x=>x.id!==id);
+          localStorage.setItem('personalSoporte', JSON.stringify(store.personalSoporte));
+          toast('Personal de soporte eliminado', 2200, 'success');
+          renderSupport();
+        },
+        onNo: ()=> {
+          toast('Operación cancelada', 1400, 'info');
+        }
+      });
       return;
     }
     if (action === 'edit') {
@@ -946,7 +1023,19 @@ function renderTrainings(){
   ul.querySelectorAll('button').forEach(b=>{
     b.addEventListener('click', ()=>{
       const id = b.dataset.id; const action = b.dataset.action;
-      if (action==='del'){ if (!confirm('Eliminar sesión?')) return; store.entrenamientos = store.entrenamientos.filter(x=>x.id!==id); localStorage.setItem('entrenamientos', JSON.stringify(store.entrenamientos)); renderTrainings(); }
+      if (action==='del'){
+        showInlineConfirm({
+          title: 'Eliminar sesión',
+          message: '¿Desea eliminar esta sesión de entrenamiento? Seleccione SÍ para confirmar o NO para cancelar.',
+          onYes: ()=> {
+            store.entrenamientos = store.entrenamientos.filter(x=>x.id!==id);
+            localStorage.setItem('entrenamientos', JSON.stringify(store.entrenamientos));
+            toast('Sesión eliminada', 2200, 'success');
+            renderTrainings();
+          },
+          onNo: ()=> { toast('Operación cancelada', 1400, 'info'); }
+        });
+      }
       else if (action==='edit'){ const t = store.entrenamientos.find(x=>x.id===id); if (!t) return; const form = document.getElementById('trainingForm'); form.date.value=t.date; form.time.value=t.time; form.type.value=t.type; form.attendance.value=(t.attendance||[]).join(','); form.notes.value=t.notes||''; showView('entrenamientos'); }
     });
   });
