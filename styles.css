@@ -130,7 +130,7 @@ body{
 .form-grid{ display:grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap:10px; align-items:start; }
 
 /* Profile */
-.profile{ min-height:220px; padding:12px; display:flex; flex-direction:column; gap:8px }
+.profile{ min-height:220px; padding:12px; display:flex; flex-direction:column; gap:6px; line-height:1.15; font-size:0.96rem; }
 .profile h4{ margin:0 }
 
 /* chart inside inline profile for análisis */
@@ -171,11 +171,13 @@ body{
 .inline-profile {
   grid-column: 1/-1;
   margin-top:6px;
-  padding:12px;
+  padding:10px;
   border-radius:8px;
   background:linear-gradient(180deg,#fff,#fbfeff);
   border:1px solid rgba(11,26,20,0.04);
   box-shadow:var(--shadow);
+  line-height:1.12;
+  font-size:0.95rem;
 }
 
 /* small utilities */
